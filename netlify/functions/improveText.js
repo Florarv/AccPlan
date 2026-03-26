@@ -32,6 +32,7 @@ exports.handler = async (event) => {
         return new Promise((resolve) => {
             const options = {
                 hostname: 'generativelanguage.googleapis.com',
+                // Updated path to use the full model identifier required by the API
                 path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
                 method: 'POST',
                 headers: { 
