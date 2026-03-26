@@ -9,7 +9,7 @@ export async function handler(event) {
     });
 
     const response = await client.responses.create({
-      model: "gpt-5.3",
+      model: "gpt-4.1-mini",
       input: [
         {
           role: "system",
