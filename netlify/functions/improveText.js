@@ -28,9 +28,6 @@ exports.handler = async (event) => {
         const postData = JSON.stringify({
     contents: [{ parts: [{ text: `Professionalize this text for a Dow Strategic Account Plan: ${text}` }] }]
 });
-        }] 
-    }]
-});
 
         return new Promise((resolve) => {
             const options = {
