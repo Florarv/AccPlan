@@ -1,40 +1,43 @@
-// Este código es para un entorno Node.js, usado por las funciones de Netlify.
-// Necesitarás instalar 'node-fetch'.
 const fetch = require('node-fetch');
 
-// El handler es la función principal que Netlify ejecutará.
-exports.handler = async function(event) {
-    // Solo permitimos peticiones de tipo POST para más seguridad.
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
-    }
+exports.handler = async function(event, context) {
+  // Esta variable se configura en el panel de control de Netlify bajo el nombre GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY;
+  
+  // Seguridad: Solo aceptamos peticiones POST
+  if (event.httpMethod !== "POST") {
+    return { 
+      statusCode: 405, 
+      body: JSON.stringify({ error: "Método no permitido. Use POST." }) 
+    };
+  }
 
-    try {
-        // Extraemos el 'prompt' que nos envía el frontend.
-        const { prompt } = JSON.parse(event.body);
+  try {
+    // Realizamos la petición a la API de Google Gemini 2.5 Flash
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: event.body
+    });
 
-        if (!prompt) {
-            return { statusCode: 400, body: 'Error: El prompt es requerido.' };
-        }
+    const data = await response.json();
 
-        // Aquí está la magia: accedemos a la API key de forma segura.
-        // Netlify inyecta esta variable desde la configuración de tu sitio.
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return { statusCode: 500, body: 'Error: La API Key no está configurada en el servidor.' };
-        }
-        
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-        const payload = {
-            contents: [{ role: "user", parts: [{ text: prompt }] }]
-        };
-
-        // Hacemos la llamada real a la API de Google desde el servidor.
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+    // Enviamos la respuesta de la IA de vuelta al navegador
+    return {
+      statusCode: 200,
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*" 
+      },
+      body: JSON.stringify(data)
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Error de comunicación con Google Gemini" })
+    };
+  }
+};            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
