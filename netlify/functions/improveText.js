@@ -1,41 +1,38 @@
-const https = require('https');
+import OpenAI from "openai";
 
-exports.handler = async (event) => {
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' } };
-    }
-
+export async function handler(event) {
+  try {
     const { text } = JSON.parse(event.body);
-    const apiKey = process.env.GEMINI_API_KEY;
 
-    const postData = JSON.stringify({
-        contents: [{ parts: [{ text: `Professionalize this text for a Dow Strategic Account Plan: ${text}` }] }]
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'generativelanguage.googleapis.com',
-            path: `/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        };
-
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', (chunk) => data += chunk);
-            res.on('end', () => {
-                const response = JSON.parse(data);
-                const improvedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "Error: No text generated.";
-                resolve({
-                    statusCode: 200,
-                    headers: { 'Access-Control-Allow-Origin': '*' },
-                    body: JSON.stringify({ improvedText })
-                });
-            });
-        });
-
-        req.on('error', (e) => resolve({ statusCode: 500, body: JSON.stringify({ error: e.message }) }));
-        req.write(postData);
-        req.end();
+    const response = await client.responses.create({
+      model: "gpt-5.3",
+      input: [
+        {
+          role: "system",
+          content:
+            "You are a senior strategic account manager at Dow Chemical. Rewrite text in high-impact corporate language. Emphasize Sustainability, Performance Science, Innovation, and Partnership.",
+        },
+        {
+          role: "user",
+          content: `Improve this account plan text: "${text}"`,
+        },
+      ],
     });
-};
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        improved: response.output_text,
+      }),
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "AI failed" }),
+    };
+  }
+}
