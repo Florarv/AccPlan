@@ -284,6 +284,7 @@
         }
 
         async function improveText(btn) {
+            console.log("AI button clicked");
             const container = btn.closest('div.relative') || btn.closest('section') || btn.closest('div');
             const textarea = container.querySelector('textarea');
             if (!textarea || !textarea.value.trim()) return;
@@ -390,5 +391,5 @@ if (data.improved) {
             });
         });
     </script>
-</body>
+
 </html>
