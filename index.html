@@ -253,7 +253,36 @@
     </div>
 
     <script>
-        // Note: For Netlify deployment, API key is handled securely via /.netlify/functions/gemini-proxy
+        // --- Gemini API Call Function via Netlify Proxy ---
+        async function callGemini(originalText) {
+            // Updated to match your netlify/functions/gemini-proxy.js filename
+            const apiUrl = `/.netlify/functions/gemini-proxy`;
+            const systemPrompt = "You are a senior strategic account manager at Dow Chemical. Rewrite the text into high-impact, professional, corporate language. Emphasize Dow's core pillars: Sustainability, Performance Science, Innovation, and Partnership. Keep it concise but strategic.";
+
+            try {
+                const response = await fetch(apiUrl, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: `Improve this account plan text: "${originalText}"` }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    }) 
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Backend function error');
+                }
+
+                const result = await response.json();
+                // Extracting based on the standard Gemini response format handled by your proxy
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || "No text generated.";
+            } catch (error) {
+                console.error("Backend Call Error:", error);
+                return `Error: ${error.message}`;
+            }
+        }
+
         function addRow(tableId) {
             const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
             const newRow = table.insertRow();
@@ -275,28 +304,16 @@
             const oldText = btn.innerHTML;
             btn.innerHTML = "Optimizing...";
 
-            const systemPrompt = "You are a senior strategic account manager at Dow Chemical. Rewrite the text into high-impact, professional, corporate language. Emphasize Dow's core pillars: Sustainability, Performance Science, Innovation, and Partnership. Keep it concise but strategic.";
-
-            try {
-                // Pointing to your secure Netlify Function instead of calling Google directly
-                const response = await fetch(`/.netlify/functions/gemini-proxy`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Improve this account plan text: "${originalText}"` }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
-                    })
-                });
-
-                const data = await response.json();
-                const improved = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (improved) textarea.value = improved.trim();
-            } catch (err) {
-                console.error("AI Error:", err);
-            } finally {
-                btn.classList.remove('ai-loading');
-                btn.innerHTML = oldText;
+            const improved = await callGemini(originalText);
+            if (improved && !improved.startsWith("Error:")) {
+                textarea.value = improved.trim();
+            } else if (improved.startsWith("Error:")) {
+                console.error(improved);
+                // Optionally show a non-intrusive UI message here
             }
+
+            btn.classList.remove('ai-loading');
+            btn.innerHTML = oldText;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
