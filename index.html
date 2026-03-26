@@ -14,35 +14,53 @@
         .ai-loading { animation: pulse 1.5s infinite; opacity: 0.5; pointer-events: none; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         
-        @media print {
-            .no-print { display: none; }
+        /* Fixed Tooltip Styling */
+        .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; cursor: help; background: #e2e8f0; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; color: #475569; margin-left: 4px; }
+        .tooltip .tooltiptext {
+            visibility: hidden; width: 220px; background-color: #1e293b; color: #fff;
+            text-align: left; border-radius: 6px; padding: 10px; position: absolute;
+            z-index: 50; bottom: 140%; left: 50%; transform: translateX(-50%);
+            opacity: 0; transition: opacity 0.2s; font-size: 11px; font-weight: 400; line-height: 1.4;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
-
-        /* Custom styles to ensure PDF looks like the UI */
-        .pdf-export-container {
-            color: #1e293b !important;
-            background-color: white !important;
-        }
-        .pdf-export-container h3 {
-            border-bottom: 2px solid #f1f5f9 !important;
-        }
+        .tooltip .tooltiptext::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
+    <div id="confirmation-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[60]">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Confirm Reset</h3>
+            <p class="text-slate-600 mb-6">Are you sure you want to clear all fields? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-reset" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                <button id="confirm-reset" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Confirm Reset</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container mx-auto p-4 sm:p-8">
+        <!-- Authentic Dow Logo & Header -->
         <div class="flex flex-col items-center mb-8">
+            <div class="mb-6">
+                <!-- Authentic Dow Diamond Design -->
+                <svg width="140" height="70" viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M70 5 L135 35 L70 65 L5 35 Z" fill="#E31837" />
+                    <text x="70" y="44" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="900" fill="white" text-anchor="middle" letter-spacing="1">DOW</text>
+                </svg>
+            </div>
             <h1 class="text-3xl font-bold text-slate-700 uppercase tracking-widest border-b-2 border-red-600 pb-1">Strategic Account Plan</h1>
         </div>
 
-        <div class="flex justify-center items-center space-x-4 mb-8 no-print">
-             <button id="reset-form-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all">Reset Form</button>
-             <button id="download-pdf-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all">Download PDF</button>
+        <div class="flex justify-center items-center space-x-4 mb-8">
+             <button id="reset-form" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all">Reset Form</button>
+             <button id="download-pdf" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all">Download PDF</button>
         </div>
 
         <div id="loader" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center z-50">
             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
-            <p id="loader-text" class="text-white mt-4 text-lg font-medium">Generating High-Quality PDF...</p>
+            <p id="loader-text" class="text-white mt-4 text-lg font-medium">Preparing Document...</p>
         </div>
 
         <!-- Main Form -->
@@ -53,7 +71,7 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-12">
-                <div class="flex flex-col"><label class="font-bold text-slate-500 text-xs uppercase mb-1">Date Prepared</label><input type="date" id="date-prepared" class="p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                <div class="flex flex-col"><label class="font-bold text-slate-500 text-xs uppercase mb-1">Date Prepared</label><input type="date" class="p-2 border border-slate-300 rounded-md bg-slate-50"></div>
                 <div class="flex flex-col"><label class="font-bold text-slate-500 text-xs uppercase mb-1">Account Manager</label><input type="text" placeholder="Manager Name" class="p-2 border border-slate-300 rounded-md bg-slate-50"></div>
                 <div class="flex flex-col"><label class="font-bold text-slate-500 text-xs uppercase mb-1">Review Cycle</label><input type="text" placeholder="e.g. Quarterly" class="p-2 border border-slate-300 rounded-md bg-slate-50"></div>
             </div>
@@ -63,15 +81,16 @@
                 <section>
                     <div class="flex justify-between items-center mb-4 border-b-2 border-slate-100 pb-2">
                         <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">1. Executive Summary</h3>
-                        <button onclick="improveText(this)" class="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 font-semibold no-print">✨ AI</button>
+                        <button onclick="improveText(this)" class="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-1 font-semibold">✨ AI Optimize</button>
                     </div>
                     <textarea class="w-full h-32 p-4 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all shadow-inner" placeholder="Provide a high-level overview of the account status, Dow's strategic positioning, and key material science initiatives..."></textarea>
                 </section>
 
-                <!-- Section 2 -->
+                <!-- Section 2: Restored Account Overview -->
                 <section>
                     <h3 class="text-xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-2 uppercase tracking-tight">2. Account Overview</h3>
                     <div class="space-y-8 pl-4">
+                        <!-- Company Profile -->
                         <div>
                             <h4 class="font-bold text-sm text-slate-500 uppercase mb-3">Company Profile</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -81,40 +100,76 @@
                             </div>
                         </div>
 
+                        <!-- Strategic Needs & Challenges -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="relative">
                                 <div class="flex justify-between items-center mb-2">
                                     <h4 class="font-bold text-sm text-slate-500 uppercase">Strategic Business Needs</h4>
-                                    <button onclick="improveText(this)" class="text-[10px] bg-slate-50 px-2 py-0.5 border rounded hover:bg-slate-100 no-print">✨ AI</button>
+                                    <button onclick="improveText(this)" class="text-[10px] bg-slate-50 px-2 py-0.5 border rounded hover:bg-slate-100">✨ AI</button>
                                 </div>
                                 <textarea class="w-full h-24 p-3 border border-slate-200 rounded-lg text-sm bg-slate-50" placeholder="What are their corporate goals? Sustainability, Lightweighting, Durability?"></textarea>
                             </div>
                             <div class="relative">
                                 <div class="flex justify-between items-center mb-2">
                                     <h4 class="font-bold text-sm text-slate-500 uppercase">Pain Points & Challenges</h4>
-                                    <button onclick="improveText(this)" class="text-[10px] bg-slate-50 px-2 py-0.5 border rounded hover:bg-slate-100 no-print">✨ AI</button>
+                                    <button onclick="improveText(this)" class="text-[10px] bg-slate-50 px-2 py-0.5 border rounded hover:bg-slate-100">✨ AI</button>
                                 </div>
                                 <textarea class="w-full h-24 p-3 border border-slate-200 rounded-lg text-sm bg-slate-50" placeholder="Supply chain issues, technical performance gaps, regulatory hurdles?"></textarea>
                             </div>
                         </div>
 
+                        <!-- Commercial Snapshot -->
                         <div class="relative">
                             <div class="flex justify-between items-center mb-2">
                                 <h4 class="font-bold text-sm text-slate-500 uppercase">Commercial Snapshot & Whitespace</h4>
-                                <button onclick="improveText(this)" class="text-[10px] bg-slate-50 px-2 py-0.5 border rounded hover:bg-slate-100 no-print">✨ AI</button>
+                                <button onclick="improveText(this)" class="text-[10px] bg-slate-50 px-2 py-0.5 border rounded hover:bg-slate-100">✨ AI</button>
                             </div>
                             <textarea class="w-full h-24 p-3 border border-slate-200 rounded-lg text-sm bg-slate-50" placeholder="Current Dow wallet share, historical sales performance, and identified 'whitespace' growth opportunities..."></textarea>
                         </div>
 
+                        <!-- Stakeholders -->
                         <div>
                             <div class="flex justify-between items-center mb-4">
                                 <h4 class="font-bold text-sm text-slate-500 uppercase">Stakeholder Analysis</h4>
-                                <button onclick="addRow('stakeholder-table')" class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded border border-red-200 hover:bg-red-600 hover:text-white transition-all font-bold no-print">+ Add Row</button>
+                                <button onclick="addRow('stakeholder-table')" class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded border border-red-200 hover:bg-red-600 hover:text-white transition-all font-bold">+ Add Row</button>
                             </div>
                             <div class="overflow-x-auto">
                                 <table id="stakeholder-table" class="w-full border-collapse editable-table text-sm">
                                     <thead class="bg-slate-100 text-slate-600">
-                                        <tr><th class="p-2 text-left border">Name/Title</th><th class="p-2 text-left border">Decision Role</th><th class="p-2 text-left border">Influence</th><th class="p-2 text-left border">Status</th></tr>
+                                        <tr>
+                                            <th class="p-2 text-left border">Name/Title</th>
+                                            <th class="p-2 text-left border">
+                                                Decision Role 
+                                                <span class="tooltip">?
+                                                    <span class="tooltiptext">
+                                                        <b>EB (Economic Buyer):</b> Final sign-off on spend.<br>
+                                                        <b>Coach:</b> Internal guide helping Dow win.<br>
+                                                        <b>Technical Buyer:</b> Evaluates performance specs.<br>
+                                                        <b>User:</b> Day-to-day operators.
+                                                    </span>
+                                                </span>
+                                            </th>
+                                            <th class="p-2 text-left border">
+                                                Influence
+                                                <span class="tooltip">?
+                                                    <span class="tooltiptext">
+                                                        <b>High:</b> Pivotally affects the final decision.<br>
+                                                        <b>Medium:</b> Influences the selection process.<br>
+                                                        <b>Low:</b> Minimal input on the vendor choice.
+                                                    </span>
+                                                </span>
+                                            </th>
+                                            <th class="p-2 text-left border">
+                                                Status
+                                                <span class="tooltip">?
+                                                    <span class="tooltiptext">
+                                                        <b>Supporter:</b> Prefers Dow solutions.<br>
+                                                        <b>Neutral:</b> No strong vendor preference.<br>
+                                                        <b>Adversary:</b> Favors competitors or status quo.
+                                                    </span>
+                                                </span>
+                                            </th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         <tr><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td></tr>
@@ -132,26 +187,40 @@
                         <div class="relative">
                             <div class="flex justify-between items-center mb-2">
                                 <h4 class="font-bold text-sm text-slate-500 uppercase">Value Driver & Rationale</h4>
-                                <button onclick="improveText(this)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded border shadow-sm no-print">✨ AI</button>
+                                <button onclick="improveText(this)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded border shadow-sm">✨ AI Improve</button>
                             </div>
                             <textarea class="w-full h-24 p-3 border border-slate-200 rounded-lg text-sm bg-slate-50" placeholder="The compelling reasons why Dow is the preferred partner for their material innovation journey..."></textarea>
                         </div>
+
+                        <!-- SWOT GRID -->
                         <div class="grid grid-cols-2 gap-4">
                             <div class="p-4 bg-green-50 border border-green-200 rounded-xl">
-                                <h5 class="text-green-800 font-black text-xs uppercase mb-2">Strengths</h5>
-                                <textarea class="w-full h-20 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Internal Dow advantages..."></textarea>
+                                <h5 class="text-green-800 font-black text-xs uppercase mb-2 flex items-center gap-2">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"></path></svg>
+                                    Strengths
+                                </h5>
+                                <textarea class="w-full h-24 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Internal Dow advantages (IP, Supply Security, Lab access)..."></textarea>
                             </div>
                             <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                                <h5 class="text-yellow-800 font-black text-xs uppercase mb-2">Weaknesses</h5>
-                                <textarea class="w-full h-20 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Service gaps..."></textarea>
+                                <h5 class="text-yellow-800 font-black text-xs uppercase mb-2 flex items-center gap-2">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 10.333v-5.43a2 2 0 00-1.106-1.79l-.05-.025A4 4 0 0011.057 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z"></path></svg>
+                                    Weaknesses
+                                </h5>
+                                <textarea class="w-full h-24 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Service gaps, pricing constraints, legacy perceptions..."></textarea>
                             </div>
                             <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                <h5 class="text-blue-800 font-black text-xs uppercase mb-2">Opportunities</h5>
-                                <textarea class="w-full h-20 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Market shifts..."></textarea>
+                                <h5 class="text-blue-800 font-black text-xs uppercase mb-2 flex items-center gap-2">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14H11V21L20 10H13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    Opportunities
+                                </h5>
+                                <textarea class="w-full h-24 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Market shifts, competitor exits, new product launches..."></textarea>
                             </div>
                             <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
-                                <h5 class="text-red-800 font-black text-xs uppercase mb-2">Threats</h5>
-                                <textarea class="w-full h-20 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Consolidation..."></textarea>
+                                <h5 class="text-red-800 font-black text-xs uppercase mb-2 flex items-center gap-2">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                    Threats
+                                </h5>
+                                <textarea class="w-full h-24 bg-transparent border-none focus:ring-0 text-sm p-0 resize-none" placeholder="Consolidation, disruptive new entrants, regulatory shifts..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -159,19 +228,24 @@
 
                 <!-- Section 4 -->
                 <section>
-                    <div class="flex justify-between items-center mb-4 border-b-2 border-slate-100 pb-2">
-                        <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">4. Action Plan</h3>
-                        <button onclick="addRow('tasks-table')" class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded border border-red-200 hover:bg-red-600 hover:text-white transition-all font-bold no-print">+ Add Task</button>
-                    </div>
-                    <div class="overflow-x-auto pl-4">
-                        <table id="tasks-table" class="w-full border-collapse editable-table text-sm">
-                            <thead class="bg-slate-100 text-slate-600">
-                                <tr><th class="p-2 border">Task Item</th><th class="p-2 border">Owner</th><th class="p-2 border">Deadline</th><th class="p-2 border">Status</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td></tr>
-                            </tbody>
-                        </table>
+                    <h3 class="text-xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-2 uppercase tracking-tight">4. Action Plan</h3>
+                     <div class="space-y-6 pl-4">
+                        <div class="relative">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="font-bold text-sm text-slate-500 uppercase">Tasks & Assignments</h4>
+                                <button onclick="addRow('tasks-table')" class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded border border-red-200 hover:bg-red-600 hover:text-white transition-all font-bold">+ Add Row</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table id="tasks-table" class="w-full border-collapse editable-table text-sm">
+                                    <thead class="bg-slate-100 text-slate-600">
+                                        <tr><th class="p-2 border">Task Item</th><th class="p-2 border">Owner</th><th class="p-2 border">Deadline</th><th class="p-2 border">Status</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td><td contenteditable="true" class="bg-white"></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -179,166 +253,121 @@
     </div>
 
     <script>
-        const apiKey = ""; 
-
-        window.addRow = function(tableId) {
-            const table = document.getElementById(tableId);
-            if (!table) return;
-            const tbody = table.getElementsByTagName('tbody')[0];
-            const newRow = tbody.insertRow();
-            const colCount = table.getElementsByTagName('th').length;
+        // Note: For Netlify deployment, API key is handled securely via /.netlify/functions/gemini-proxy
+        function addRow(tableId) {
+            const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            const colCount = table.closest('table').getElementsByTagName('th').length;
             for(let i=0; i<colCount; i++) {
                 const cell = newRow.insertCell(i);
                 cell.contentEditable = "true";
                 cell.className = "bg-white";
             }
-        };
+        }
 
-        window.improveText = async function(btn) {
+        async function improveText(btn) {
             const container = btn.closest('div.relative') || btn.closest('section') || btn.closest('div');
             const textarea = container.querySelector('textarea');
             if (!textarea || !textarea.value.trim()) return;
 
             const originalText = textarea.value;
-            const oldHtml = btn.innerHTML;
             btn.classList.add('ai-loading');
-            btn.innerText = "Processing...";
+            const oldText = btn.innerHTML;
+            btn.innerHTML = "Optimizing...";
+
+            const systemPrompt = "You are a senior strategic account manager at Dow Chemical. Rewrite the text into high-impact, professional, corporate language. Emphasize Dow's core pillars: Sustainability, Performance Science, Innovation, and Partnership. Keep it concise but strategic.";
 
             try {
-                const response = await fetch('/.netlify/functions/improve-text', {
+                // Pointing to your secure Netlify Function instead of calling Google directly
+                const response = await fetch(`/.netlify/functions/gemini-proxy`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: originalText })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Improve this account plan text: "${originalText}"` }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    const improved = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (improved) textarea.value = improved.trim();
-                } else {
-                    throw new Error('Netlify fail');
-                }
+                const data = await response.json();
+                const improved = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (improved) textarea.value = improved.trim();
             } catch (err) {
-                if (apiKey) {
-                    try {
-                        const systemPrompt = "Rewrite professionally for Dow Chemical account managers.";
-                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: `Improve this: "${originalText}"` }] }],
-                                systemInstruction: { parts: [{ text: systemPrompt }] }
-                            })
-                        });
-                        const data = await res.json();
-                        const improved = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (improved) textarea.value = improved.trim();
-                    } catch (e) {}
-                }
+                console.error("AI Error:", err);
             } finally {
                 btn.classList.remove('ai-loading');
-                btn.innerHTML = oldHtml;
+                btn.innerHTML = oldText;
             }
-        };
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
-            const dateInput = document.getElementById('date-prepared');
-            if(dateInput) dateInput.valueAsDate = new Date();
+            document.querySelectorAll('input[type="date"]').forEach(i => i.valueAsDate = new Date());
 
-            document.getElementById('reset-form-btn').addEventListener('click', () => {
-                const inputs = document.querySelectorAll('input, textarea');
-                inputs.forEach(i => i.value = '');
-                document.querySelectorAll('[contenteditable="true"]').forEach(c => c.innerText = '');
-                if(dateInput) dateInput.valueAsDate = new Date();
+            document.getElementById('reset-form').addEventListener('click', () => document.getElementById('confirmation-modal').classList.remove('hidden'));
+            document.getElementById('cancel-reset').addEventListener('click', () => document.getElementById('confirmation-modal').classList.add('hidden'));
+            document.getElementById('confirm-reset').addEventListener('click', () => {
+                location.reload();
             });
 
-            document.getElementById('download-pdf-btn').addEventListener('click', async () => {
+            document.getElementById('download-pdf').addEventListener('click', async () => {
                 const loader = document.getElementById('loader');
                 loader.classList.remove('hidden');
 
                 const formToExport = document.getElementById('account-plan-form');
                 const customerName = document.getElementById('customer-name').value || 'Account';
                 
-                // Clone the form for modification
                 const printable = formToExport.cloneNode(true);
-                printable.classList.add('pdf-export-container');
-                document.body.appendChild(printable); 
+                printable.style.width = '800px';
+                printable.style.position = 'absolute';
+                printable.style.left = '-9999px';
+                printable.style.padding = '40px';
+                printable.style.backgroundColor = 'white';
                 
-                // Set static width for consistent rendering
-                printable.style.cssText = 'width: 794px; position: absolute; top: 0; left: -5000px; padding: 40px; background: white;';
-                
-                printable.querySelectorAll('.no-print').forEach(b => b.remove());
+                // Cleanup clone
+                printable.querySelectorAll('button').forEach(b => b.remove());
+                printable.querySelectorAll('.tooltip').forEach(t => t.remove());
 
-                // Replace all interactive elements with static divs to preserve values in screenshot
-                const originalInputs = formToExport.querySelectorAll('input, textarea');
-                const cloneInputs = printable.querySelectorAll('input, textarea');
+                // Manually capture inputs
+                const originalControls = formToExport.querySelectorAll('input, textarea');
+                const cloneControls = printable.querySelectorAll('input, textarea');
                 
-                cloneInputs.forEach((el, index) => {
-                    const original = originalInputs[index];
-                    const val = original.value;
+                cloneControls.forEach((el, index) => {
+                    const original = originalControls[index];
                     const div = document.createElement('div');
-                    
-                    // Specific styling to match the original look in PDF
-                    let style = `padding: 8px; margin-bottom: 8px; font-size: 14px; white-space: pre-wrap; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; min-height: 1.5em; color: #1e293b;`;
-                    
-                    // Special case for the big customer name title
-                    if (el.id === 'customer-name') {
-                        style = `font-size: 28px; font-weight: bold; border-bottom: 2px solid #dc2626; padding-bottom: 10px; margin-bottom: 20px; color: #334155;`;
+                    div.style.cssText = `padding: 8px; border: 1px solid #f1f5f9; margin-bottom: 8px; font-size: 13px; white-space: pre-wrap; background: #fafafa; border-radius: 6px; min-height: 24px;`;
+                    div.textContent = original.value || el.placeholder;
+                    if (!original.value) {
+                        div.style.color = '#cbd5e1';
+                        div.style.fontStyle = 'italic';
                     }
-                    
-                    div.style.cssText = style;
-                    div.textContent = val || '';
                     el.parentNode.replaceChild(div, el);
                 });
 
-                // Re-sync table data (cloning doesn't always keep innerText if modified)
-                const originalTables = formToExport.querySelectorAll('table');
-                const cloneTables = printable.querySelectorAll('table');
-                originalTables.forEach((table, tIdx) => {
-                    const originalCells = table.querySelectorAll('td');
-                    const cloneCells = cloneTables[tIdx].querySelectorAll('td');
-                    originalCells.forEach((cell, cIdx) => {
-                        cloneCells[cIdx].textContent = cell.textContent;
-                        cloneCells[cIdx].style.backgroundColor = 'white';
-                        cloneCells[cIdx].style.border = '1px solid #cbd5e1';
-                    });
-                });
-
                 try {
-                    const canvas = await html2canvas(printable, { 
-                        scale: 2, 
-                        useCORS: true, 
-                        logging: false,
-                        backgroundColor: '#ffffff',
-                        width: 794
-                    });
-                    
+                    const canvas = await html2canvas(printable, { scale: 2, useCORS: true, logging: false });
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF('p', 'mm', 'a4');
-                    
-                    const imgWidth = 210; // A4 Width in mm
-                    const pageHeight = 297; // A4 Height in mm
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    const imgWidth = pdfWidth;
                     const imgHeight = (canvas.height * imgWidth) / canvas.width;
                     
                     let heightLeft = imgHeight;
                     let position = 0;
-                    const imgData = canvas.toDataURL('image/png', 1.0);
 
-                    // Add first page
                     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
+                    heightLeft -= pdfHeight;
 
-                    // Add subsequent pages if content overflows
-                    while (heightLeft >= 0) {
+                    while (heightLeft > 0) {
                         position = heightLeft - imgHeight;
                         pdf.addPage();
                         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= pageHeight;
+                        heightLeft -= pdfHeight;
                     }
-                    
+
                     pdf.save(`Dow_AccountPlan_${customerName.replace(/\s+/g, '_')}.pdf`);
                 } catch (err) {
-                    console.error("PDF Error:", err);
+                    console.error("PDF Export Error", err);
                 } finally {
                     document.body.removeChild(printable);
                     loader.classList.add('hidden');
