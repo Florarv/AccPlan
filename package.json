@@ -1,8 +1,15 @@
 {
-  "name": "cv-builder-netlify",
-  "version": "1.0.0",
-  "description": "Dependencias para la función de Netlify",
-  "dependencies": {
-    "node-fetch": "^2.6.1"
-  }
+"name": "dow-strategic-account-plan",
+"version": "1.0.0",
+"description": "Generador de planes estratégicos para Dow con integración de IA",
+"main": "index.html",
+"scripts": {
+"test": "echo "Error: no test specified" && exit 1"
+},
+"keywords": [],
+"author": "",
+"license": "ISC",
+"dependencies": {
+"node-fetch": "^2.7.0"
+}
 }
