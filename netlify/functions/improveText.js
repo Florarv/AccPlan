@@ -1,40 +1,54 @@
-const fetch = require('node-node-fetch'); // Netlify provides this in the environment
-
-exports.handler = async (event, context) => {
-  // Only allow POST requests
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+exports.handler = async (event) => {
+  // Handle CORS Preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      }
+    };
   }
 
   try {
     const { text } = JSON.parse(event.body);
-    const apiKey = process.env.GEMINI_API_KEY; // This pulls from your Netlify Env Variables
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    if (!apiKey) {
-      return { 
-        statusCode: 500, 
-        body: JSON.stringify({ error: "API Key not found in Netlify environment variables." }) 
-      };
-    }
-
-    // Using the stable 1.5-flash model for better reliability on Netlify
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-    const response = await fetch(url, {
+    // We use global fetch (available in Node.js 18+) 
+    // This doesn't need any 'require' or 'package.json'
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `Rewrite this Dow strategic account plan text into professional, high-impact corporate language: "${text}"` }] }],
-        systemInstruction: { 
-          parts: [{ text: "You are a senior strategic account manager at Dow Chemical. Emphasize Sustainability, Performance Science, and Innovation." }] 
-        }
+        contents: [{ parts: [{ text: `Professionalize this text for a Dow Strategic Account Plan: ${text}` }] }]
       })
     });
 
     const data = await response.json();
-    const improvedText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    // Safety check for API response
+    if (!data.candidates || !data.candidates[0]) {
+        throw new Error("Invalid API response");
+    }
+
+    const improvedText = data.candidates[0].content.parts[0].text;
 
     return {
+      statusCode: 200,
+      headers: { 
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ improvedText })
+    };
+  } catch (error) {
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ error: error.message }) 
+    };
+  }
+};    return {
       statusCode: 200,
       body: JSON.stringify({ improvedText })
     };
