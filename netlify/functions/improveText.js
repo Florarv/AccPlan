@@ -1,42 +1,44 @@
-import OpenAI from "openai";
-
 export async function handler(event) {
   try {
     const { text } = JSON.parse(event.body);
 
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "system",
-          content: "You are a senior strategic account manager at Dow Chemical. Rewrite text professionally.",
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          role: "user",
-          content: `Improve this account plan text: "${text}"`,
-        },
-      ],
-    });
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `You are a senior strategic account manager at Dow. Rewrite this text in high-impact corporate language. Emphasize Sustainability, Innovation, Performance Science, and Partnership:\n\n${text}`,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    const improved =
+      data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        improved: response.output_text || "NO OUTPUT"
-      }),
+      body: JSON.stringify({ improved }),
     };
-
   } catch (error) {
-    console.error("FULL ERROR:", error); // 👈 IMPORTANT
-
     return {
       statusCode: 500,
       body: JSON.stringify({
         error: error.message,
-        stack: error.stack
       }),
     };
   }
