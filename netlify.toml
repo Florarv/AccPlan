@@ -1,0 +1,25 @@
+[build]
+
+Directorio donde reside el index.html
+
+publish = "."
+
+Directorio donde Netlify buscará tus funciones serverless
+
+functions = "netlify/functions"
+
+Redirección para asegurar que las rutas carguen siempre el index.html
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+Cabeceras de seguridad recomendadas
+
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "no-referrer"
