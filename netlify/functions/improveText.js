@@ -26,13 +26,8 @@ exports.handler = async (event) => {
         }
 
         const postData = JSON.stringify({
-    contents: [{ 
-        parts: [{ 
-            text: `You are a senior strategic account manager at Dow Chemical. Rewrite the following text into high-impact, professional, corporate language for a Strategic Account Plan. Emphasize Sustainability, Performance Science, and Innovation. 
-
-            STRICT RULE: Return ONLY the rewritten text. Do not include introductions, explanations, bullet points, or conversational filler. 
-
-            Text to rewrite: ${text}` 
+    contents: [{ parts: [{ text: `Professionalize this text for a Dow Strategic Account Plan: ${text}` }] }]
+});
         }] 
     }]
 });
