@@ -13,8 +13,7 @@ export async function handler(event) {
       input: [
         {
           role: "system",
-          content:
-            "You are a senior strategic account manager at Dow Chemical. Rewrite text in high-impact corporate language. Emphasize Sustainability, Performance Science, Innovation, and Partnership.",
+          content: "You are a senior strategic account manager at Dow Chemical. Rewrite text professionally.",
         },
         {
           role: "user",
@@ -26,13 +25,19 @@ export async function handler(event) {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        improved: response.output_text,
+        improved: response.output_text || "NO OUTPUT"
       }),
     };
+
   } catch (error) {
+    console.error("FULL ERROR:", error); // 👈 IMPORTANT
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "AI failed" }),
+      body: JSON.stringify({
+        error: error.message,
+        stack: error.stack
+      }),
     };
   }
 }
