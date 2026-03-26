@@ -309,9 +309,7 @@
 });
 
 const data = await response.json();
-console.log("FULL RESPONSE:", data);
-textarea.value = JSON.stringify(data, null, 2);
-return;
+
 if (data.improvedText) {
     textarea.value = data.improvedText.trim();
 }
